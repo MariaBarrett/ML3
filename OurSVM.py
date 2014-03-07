@@ -1,9 +1,9 @@
 from __future__ import division
-from sklearn.svm import libsvm, SVC
+from sklearn.svm import SVC
 import numpy as np
-from sklearn.grid_search import GridSearchCV
-from sklearn.metrics import classification_report
 import random
+from operator import itemgetter
+from collections import Counter
 
 
 trainfile = open("parkinsonsTrainStatML.dt", "r")
@@ -26,7 +26,7 @@ def read_data(filename):
 
 ##############################################################################
 #
-#                             Normalizing 
+#                      Normalizing and transforming
 #
 ##############################################################################
 """
@@ -96,6 +96,12 @@ def sfold(labels, features,s):
 	label_slices = [labels[i::s] for i in xrange(s)]
 	return label_slices, feature_slices
 
+##############################################################################
+#
+#                      Cross validation
+#
+##############################################################################
+
 """
 After having decorated, this function gets a slice for testing and uses the rest for training.
 First we choose test-set - that's easy.
@@ -106,20 +112,25 @@ def crossval(X_train, y_train, folds):
 	# Set the parameters by cross-validation
 	tuned_parameters = [{'gamma': [0.00001,0.0001,0.001,0.01,0.1,1],
                      'C': [0.001,0.01,0.1,1,10,100]}]
-	print ('*'*45)
+
+	print ('-'*45)
 	print ('%d-fold cross validation' %folds)
-	print ('*'*45)
+	print ('-'*45)
 	
 	labels_slices, features_slices = sfold(y_train, X_train,folds)
+	Accuracy = []
 
-	temp = 0
 	for f in xrange(folds):
+		crossvaltrain = []
+		crossvaltrain_labels = []
+		
+
+		#define test-set for this run
 		crossvaltest = features_slices[f]
 		crossvaltest =  np.array(crossvaltest)
 		crossvaltest_labels = labels_slices[f]
 		crossvaltest_labels = np.array(crossvaltest_labels)
-		crossvaltrain =[]
-		crossvaltrain_labels = []
+
 		for i in xrange(folds): #putting content of remaining slices in the train set 
 			if i != f: 
 				for elem in features_slices[i]:
@@ -132,24 +143,40 @@ def crossval(X_train, y_train, folds):
 
 		#gridsearch
 		for g in tuned_parameters[0]['gamma']:
+			accuracy = []
 			for c in tuned_parameters[0]['C']:
-				details = libsvm.fit(crossvaltrain, crossvaltrain_labels, kernel ='rbf', C=c, gamma=g)
-				y_pred = libsvm.predict(crossvaltest)
+				clf = SVC(C=c, gamma=g)
+				clf.fit(crossvaltrain, crossvaltrain_labels)
+				y_pred = clf.predict(crossvaltest)
+				counter = 0
+				temp = []
+				for y in xrange(len(y_pred)):
+					if y_pred[y] != crossvaltest_labels[y]:
+						counter +=1
+				temp.append(g)
+				temp.append(c)
+				temp.append(counter / len(crossvaltrain))
+				accuracy.append(temp)
+			
+		#For every fold get the best hyperparam:
+		accuracy.sort(key=itemgetter(2))
+		best_of_the_fold = tuple(accuracy[0][:2]) #not taking the error value - only the hyperparams
+		print "Best hyperparameters of fold %d (gamma, C) %s" %(f+1, best_of_the_fold)
+		Accuracy.append(best_of_the_fold) 
 
-		"""
-		clf = GridSearchCV(SVC(), tuned_parameters)
-		clf.fit(crossvaltrain, crossvaltrain_labels)
+	# finding the most frequent pair
+	counted = Counter(Accuracy).most_common()
+	most_frequent_pair = counted[0][0]
+	print "Best hyperparameter", most_frequent_pair
+	return most_frequent_pair
 
-		print"Best parameters set found on development set:"
-		print clf.best_estimator_
-		print"Grid scores on development set:"
-		for params, mean_score, scores in clf.grid_scores_:
-			print"%0.3f (+/-%0.03f) for %r" % (mean_score, scores.std() / 2, params)
-    
-    	y_true, y_pred = crossvaltest_labels, clf.predict(crossvaltest)
-    	print classification_report(y_true, y_pred)
 
-    	"""
+ ##############################################################################
+#
+#                   	  Calling
+#
+##############################################################################
+
 y_train, X_train = read_data(trainfile)
 y_test, X_test = read_data(testfile)
 
@@ -163,5 +190,13 @@ transformtest_mean, transformtest_var = mean_variance(X_test_trans)
 print "Mean of transformed test set: \n", transformtest_mean
 print "Variance of transformed test set: \n", transformtest_var
 
-crossval(X_train, y_train, 5)
+print '*'*45
+print "Not normalized"
+print '*'*45
+best_hyperparam_pair = crossval(X_train, y_train, 5)
+
+print '*'*45
+print "Normalized"
+print '*'*45
+best_hyperparam_pair_norm = crossval(X_train_norm, y_train, 5)
 
