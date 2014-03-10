@@ -1,5 +1,5 @@
 from __future__ import division
-from sklearn.svm import SVC
+from sklearn.svm import SVC, libsvm
 import numpy as np
 import random
 from operator import itemgetter
@@ -14,13 +14,15 @@ This function reads in the files, strips by newline and splits by space char.
 It returns the labels as a 1D list and the features as one numpy array per row.
 """
 def read_data(filename):
-	features = ([])
+	features = []
 	labels = []
 	for l in filename.readlines():
 		l = np.array(l.rstrip('\n').split(),dtype='float')
 		features.append(l[:-1])
 		labels.append(l[-1])
-	return labels, features
+	feat = np.array(features)
+	lab = np.array(labels)
+	return lab, feat
 
 
 
@@ -170,6 +172,28 @@ def crossval(X_train, y_train, folds):
 	print "Best hyperparameter", most_frequent_pair
 	return most_frequent_pair
 
+def error_svc(X_train, y_train, X_test, y_test):
+	clf = SVC(C=1, gamma=0.001)
+	clf.fit(X_train, y_train)
+	y_pred = clf.predict(X_test)
+	counter = 0
+	for y in xrange(len(y_pred)):
+		if y_pred[y] != y_test[y]:
+			counter +=1
+	error = counter / len(X_test)
+	return error
+
+def freeandbounded_libsvm(X_train, y_train, X_test, y_test, c):
+	out = libsvm.fit(X_train, y_train, C=c, gamma=0.0000000001)
+	return len(out[1])
+
+def differentC(X_train, y_train, X_test, y_test):
+	C = [1,10000,100000,1000000,10000000, 100000000, 1000000000, 10000000000 ]
+	for c in C:
+		sup_vectors = freeandbounded_libsvm(X_train, y_train, X_test, y_test, c)
+		print "Number of free and bounded support vectors in trainset with C = %d: %d" %(c,sup_vectors)
+	
+
 
  ##############################################################################
 #
@@ -182,8 +206,10 @@ y_test, X_test = read_data(testfile)
 
 number_of_features = len(X_train[0])
 train_mean, train_variance = mean_variance(X_train)
+
 print "Mean of train set before normalization: \n", train_mean
 print "Variance of train set before normalization: \n", train_variance
+
 X_train_norm = meanfree(X_train)
 X_test_trans = transformtest(X_train, X_test) 
 transformtest_mean, transformtest_var = mean_variance(X_test_trans)
@@ -200,3 +226,17 @@ print "Normalized"
 print '*'*45
 best_hyperparam_pair_norm = crossval(X_train_norm, y_train, 5)
 
+print '*'*45
+print "Error when trained on train set tested on test set with C = 1, gamma = 0.001"
+print '*'*45
+err = error_svc(X_train, y_train, X_test, y_test)
+print "Not normalized: ", err
+err_norm = error_svc(X_train_norm, y_train, X_test_trans, y_test)
+print "Normalized: ", err_norm
+		
+print '*'*45
+print "Number of free and bounded support vectors with different C, gamma = 0.0000000001"
+print '*'*45		
+differentC(X_train, y_train, X_test, y_test)
+
+#when doing crossval on the normalized set should we normalize the trainset and transform the test set?
