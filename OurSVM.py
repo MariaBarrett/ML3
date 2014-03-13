@@ -152,7 +152,7 @@ def crossval(X, y, folds):
 	accuracy.sort(key=itemgetter(2)) #sort by error - lowest first
 	bestperf = accuracy[0][-1]
 	bestpair = tuple(accuracy[0][:2])
-	print "\nAveraged error of best hyperparameter, %s: %.4f" %(bestpair, bestperf)
+	print "\nAverage error of best hyperparameter, %s: %.4f" %(bestpair, bestperf)
 
 
 def error_svc(X_train, y_train, X_test, y_test):
@@ -173,7 +173,7 @@ The rest of the support vectors are free.
 It prints the number of free and bound support vectors. 
 """
 def differentC(X_train, y_train, X_test, y_test):
-	C = [1,10,100,1000,10000,100000,1000000,10000000, 100000000]
+	C = [1,10,100,1000,10000]
 	
 	for c in C:
 		bounded = 0
