@@ -7,7 +7,7 @@ from collections import Counter
 
 
 trainfile = open("parkinsonsTrainStatML.dt", "r")
-testfile = open("parkinsonsTestStatML.dt", "r")
+testfile = open("parkinsonsTrainStatML.dt", "r")
 
 
 """
@@ -235,3 +235,4 @@ print "Number of free and bounded support vectors with different C, gamma = 0.00
 print '*'*45	
 
 differentC(X_train, y_train, X_test, y_test)
+
