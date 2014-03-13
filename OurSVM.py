@@ -182,13 +182,25 @@ def error_svc(X_tr, y_tr, X_te, y_te):
 def freeandbounded_libsvm(X_tr, y_tr, X_te, y_te, c):
 	bounded = 0
 	out = libsvm.fit(X_tr, y_tr, C=c, gamma=0.0000000001)	
-	return out[2] #the number of free and bounded support vectors
+	return out 
 
-
+"""
+This function tryes different C's and looks at the output. If the coefficient = c, then the support vector is bounded.
+The rest of the support vectors are free.
+It prints the number of free and bound support vectors. 
+"""
 def differentC(X_train, y_train, X_test, y_test):
 	C = [10000,100000,1000000,10000000, 100000000, 1000000000, 10000000000 ]
+	
 	for c in C:
-		free, bounded = freeandbounded_libsvm(X_train, y_train, X_test, y_test, c)
+		bounded = 0
+		out = freeandbounded_libsvm(X_train, y_train, X_test, y_test, c)
+		supportvectors = len(out[0])
+		coef = out[3]
+		for co in coef[0]:
+			if co == c:
+				bounded += 1
+		free = supportvectors - bounded
 		print "C = %d: free: %d, bounded: %d " %(c, free, bounded)
 	
 
