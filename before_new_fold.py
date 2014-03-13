@@ -9,7 +9,6 @@ from collections import Counter
 trainfile = open("parkinsonsTrainStatML.dt", "r")
 testfile = open("parkinsonsTrainStatML.dt", "r")
 
-
 """
 This function reads in the files, strips by newline and splits by space char. 
 It returns the labels as a 1D list and the features as one numpy array per row.
@@ -24,6 +23,8 @@ def read_data(filename):
 	feat = np.array(features)
 	lab = np.array(labels)
 	return lab, feat
+
+
 
 ##############################################################################
 #
@@ -62,8 +63,11 @@ def meanfree(data):
 	mean, variance = mean_variance(data)
 
 	new = np.copy(data)
-	meanfree = (new - mean) / np.sqrt(variance)
-	return meanfree
+	for i in xrange(len(new)):
+		for num in xrange(number_of_features):
+			#replacing at correct index in the copy
+			new[i][num] = (new[i][num] - mean[num]) / np.sqrt(variance[num])
+	return new 
 
 """
 This function transforms the test set using the mean and variance from the train set.
@@ -118,82 +122,77 @@ def crossval(X_train, y_train, folds):
 	labels_slices, features_slices = sfold(y_train, X_train,folds)
 	Accuracy = []
 
-	#gridsearch
-	for g in tuned_parameters[0]['gamma']:
-		accuracy = []
-		for c in tuned_parameters[0]['C']:
-			temp = []
-			#crossvalidation
-			for f in xrange(folds):
-				crossvaltrain = []
-				crossvaltrain_labels = []
-				
-				#define test-set for this run
-				crossvaltest = features_slices[f]
-				crossvaltest =  np.array(crossvaltest)
-				crossvaltest_labels = labels_slices[f]
-				crossvaltest_labels = np.array(crossvaltest_labels)
+	for f in xrange(folds):
+		crossvaltrain = []
+		crossvaltrain_labels = []
+		
 
-				for i in xrange(folds): #putting content of remaining slices in the train set 
-					if i != f: # - if it is not the test slice: 
-						for elem in features_slices[i]:
-							crossvaltrain.append(elem) #making a list of trainset for this run
-							
-						for lab in labels_slices[i]:
-							crossvaltrain_labels.append(lab) #...and a list of adjacent labels
-				
-				crossvaltrain = np.array(crossvaltrain)
-				crossvaltrain_labels = np.array(crossvaltrain_labels)
+		#define test-set for this run
+		crossvaltest = features_slices[f]
+		crossvaltest =  np.array(crossvaltest)
+		crossvaltest_labels = labels_slices[f]
+		crossvaltest_labels = np.array(crossvaltest_labels)
 
-				#Classifying using SVC
+		
+		for i in xrange(folds): #putting content of remaining slices in the train set 
+			if i != f: #if it is not the test slice: 
+				for elem in features_slices[i]:
+					crossvaltrain.append(elem) #making a list of trainset for this run
+					
+				for lab in labels_slices[i]:
+					crossvaltrain_labels.append(lab) #...and a list of adjacent labels
+		crossvaltrain = np.array(crossvaltrain)
+		crossvaltrain_labels = np.array(crossvaltrain_labels)
+
+		#gridsearch
+		for g in tuned_parameters[0]['gamma']:
+			accuracy = []
+			for c in tuned_parameters[0]['C']:
 				clf = SVC(C=c, gamma=g)
 				clf.fit(crossvaltrain, crossvaltrain_labels)
 				y_pred = clf.predict(crossvaltest)
-				#getting the error count
 				counter = 0
-				
+				temp = []
 				for y in xrange(len(y_pred)):
 					if y_pred[y] != crossvaltest_labels[y]:
 						counter +=1
-				#and storing the error result. 
+				temp.append(g)
+				temp.append(c)
 				temp.append(counter / len(crossvaltrain))
+				accuracy.append(temp)
+			
+		#For every fold get the best hyperparam:
+		accuracy.sort(key=itemgetter(2))
+		best_of_the_fold = tuple(accuracy[0][:2]) #not taking the error value - only the hyperparams
+		print "Best hyperparameters of fold %d (gamma, C) %s" %(f+1, best_of_the_fold)
+		Accuracy.append(best_of_the_fold) 
 
-			#for every setting, get the average performance of the 5 runs:
-			temp = np.array(temp)
-			mean = np.mean(temp)
-			print "Average error of %s: %.6f" %((g,c), mean)
-			accuracy.append([c,g,mean])
-
-	#After all C's and gammas have been tried: get the best performance and the hyperparam pairs for that:
-	accuracy.sort(key=itemgetter(2)) #sort by error - lowest first
-	bestperf = accuracy[0][-1]
-	bestpair = tuple(accuracy[0][:2])
-	print "\nBest hyperparameter (gamma, C):", bestpair
-	print "Error:", bestperf
-
+	# finding the most frequent pair
+	counted = Counter(Accuracy).most_common()
+	most_frequent_pair = counted[0][0]
+	print "Best hyperparameter", most_frequent_pair
+	return most_frequent_pair
 
 def error_svc(X_train, y_train, X_test, y_test):
-	out = libsvm.fit(X_train, y_train, svm_type=0, C=1, gamma=0.001)
-	y_pred = libsvm.predict(X_test, *out)
-	print y_pred
+	clf = SVC(C=1, gamma=0.001)
+	clf.fit(X_train, y_train)
+	y_pred = clf.predict(X_test)
 	counter = 0
 	for y in xrange(len(y_pred)):
 		if y_pred[y] != y_test[y]:
 			counter +=1
 	error = counter / len(X_test)
 	return error
-	
-def freeandbounded_libsvm(X_train, y_train, X_test, y_test, c):
-	bounded = 0
-	out = libsvm.fit(X_train, y_train, C=c, gamma=0.0000000001)	
-	return out[2]
 
+def freeandbounded_libsvm(X_train, y_train, X_test, y_test, c):
+	out = libsvm.fit(X_train, y_train, C=c, gamma=0.0000000001)
+	return len(out[1])
 
 def differentC(X_train, y_train, X_test, y_test):
-	C = [10000,100000,1000000,10000000, 100000000, 1000000000, 10000000000 ]
+	C = [1,10000,100000,1000000,10000000, 100000000, 1000000000, 10000000000 ]
 	for c in C:
-		free, bounded = freeandbounded_libsvm(X_train, y_train, X_test, y_test, c)
-		print "C = %d: free: %d, bounded: %d " %(c, free, bounded)
+		sup_vectors = freeandbounded_libsvm(X_train, y_train, X_test, y_test, c)
+		print "Number of free and bounded support vectors in trainset with C = %d: %d" %(c,sup_vectors)
 	
 
 
@@ -221,17 +220,16 @@ print "Variance of transformed test set: \n", transformtest_var
 print '*'*45
 print "Not normalized"
 print '*'*45
-best_hyperparam = crossval(X_train, y_train, 5)
+best_hyperparam_pair = crossval(X_train, y_train, 5)
 
 print '*'*45
 print "Normalized"
 print '*'*45
-best_hyperparam_norm = crossval(X_train_norm, y_train, 5)
+best_hyperparam_pair_norm = crossval(X_train_norm, y_train, 5)
 
 print '*'*45
-print "Error when trained on train set tested on test set C = 1, gamma = 0.001"
+print "Error when trained on train set tested on test set with C = 1, gamma = 0.001"
 print '*'*45
-
 err = error_svc(X_train, y_train, X_test, y_test)
 print "Not normalized: ", err
 err_norm = error_svc(X_train_norm, y_train, X_test_trans, y_test)
@@ -242,3 +240,4 @@ print "Number of free and bounded support vectors with different C, gamma = 0.00
 print '*'*45		
 differentC(X_train, y_train, X_test, y_test)
 
+#when doing crossval on the normalized set should we normalize the trainset and transform the test set?
