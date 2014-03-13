@@ -155,15 +155,15 @@ def crossval(X, y, folds):
 	print "\nAveraged error of best hyperparameter, %s: %.4f" %(bestpair, bestperf)
 
 
-def error_svc(X_tr, y_tr, X_te, y_te):
-	out = libsvm.fit(X_tr, y_tr, svm_type=0, C=1, gamma=0.001)
-	y_pred = libsvm.predict(X_te, *out)
+def error_svc(X_train, y_train, X_test, y_test):
+	out = libsvm.fit(X_train, y_train, svm_type=0, C=1, gamma=0.001)
+	y_pred = libsvm.predict(X_test, *out)
 
 	counter = 0
 	for y in xrange(len(y_pred)):
-		if y_pred[y] != y_te[y]:
+		if y_pred[y] != y_test[y]:
 			counter +=1
-	error = counter / len(X_te)
+	error = counter / len(X_test)
 	return error
 	
 """
@@ -173,11 +173,11 @@ The rest of the support vectors are free.
 It prints the number of free and bound support vectors. 
 """
 def differentC(X_train, y_train, X_test, y_test):
-	C = [10000,100000,1000000,10000000, 100000000, 1000000000, 10000000000 ]
+	C = [1,10,100,1000,10000,100000,1000000,10000000, 100000000]
 	
 	for c in C:
 		bounded = 0
-		out = libsvm.fit(X_train, y_train, C=c, gamma=0.0000000001)	
+		out = libsvm.fit(X_train, y_train, C=c, gamma=0.001)	
 
 		supportvectors = len(out[0])
 		coef = out[3]
@@ -221,7 +221,7 @@ print '*'*45
 best_hyperparam_norm = crossval(X_train_norm, y_train, 5)
 
 print '*'*45
-print "Error when trained on train set tested on test set C = 1, gamma = 0.001"
+print "Error when trained on train set tested on test using best hyperparameter"
 print '*'*45
 
 err = error_svc(X_train, y_train, X_test, y_test)
@@ -231,7 +231,7 @@ err_norm = error_svc(X_train_norm, y_train, X_test_trans, y_test)
 print "Normalized: ", err_norm
 		
 print '*'*45
-print "Number of free and bounded support vectors with different C, gamma = 0.0000000001"
+print "Number of free and bounded support vectors with different C, gamma = 0.001"
 print '*'*45	
 
 differentC(X_train, y_train, X_test, y_test)
