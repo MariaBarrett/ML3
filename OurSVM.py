@@ -41,12 +41,8 @@ def mean_variance(data):
 	Mean = sum(data) / len(data)
 
 	#variance:
-	for i in xrange(len(data[0])): #for every feature
-		su = 0
-		for elem in data: 
-			su += (elem[i] - Mean[i])**2
-		variance = su / len(data)
-		Variance.append(variance)
+	Variance = sum((data - Mean)**2) / len(data)
+
 	return Mean, Variance
 	
 
@@ -101,12 +97,13 @@ def sfold(labels, features,s):
 ##############################################################################
 
 """
-After having decorated, this function gets a slice for testing and uses the rest for training.
-First we choose test-set - that's easy.
-Then for every test-set for as many folds as there are: use the remaining as train sets exept if it's the test set. 
-Then we sum up the result for every run and average over them and print the result.  
+After having decorated, the function gets all combinations of C's and gammas. For each combination it
+runs 5 fold crossvalidation: 
+For every test-set for as many folds as there are: use the remaining as train sets exept if it's the test set. 
+Then we sum up the result for every run and average it. The average performance per combination is stored.
+The best /lowest average and the combination that produced it is returned.   
 """
-def crossval(X_train, y_train, folds):
+def crossval(X, y, folds):
 	# Set the parameters by cross-validation
 	tuned_parameters = [{'gamma': [0.00001,0.0001,0.001,0.01,0.1,1],
                      'C': [0.001,0.01,0.1,1,10,100]}]
@@ -115,7 +112,7 @@ def crossval(X_train, y_train, folds):
 	print ('%d-fold cross validation' %folds)
 	print ('-'*45)
 	
-	labels_slices, features_slices = sfold(y_train, X_train,folds)
+	labels_slices, features_slices = sfold(y, X,folds)
 	Accuracy = []
 
 	#gridsearch
@@ -172,21 +169,20 @@ def crossval(X_train, y_train, folds):
 	print "Error:", bestperf
 
 
-def error_svc(X_train, y_train, X_test, y_test):
-	out = libsvm.fit(X_train, y_train, svm_type=0, C=1, gamma=0.001)
-	y_pred = libsvm.predict(X_test, *out)
-	print y_pred
+def error_svc(X_tr, y_tr, X_te, y_te):
+	out = libsvm.fit(X_tr, y_tr, svm_type=0, C=1, gamma=0.001)
+	y_pred = libsvm.predict(X_te, *out)
 	counter = 0
 	for y in xrange(len(y_pred)):
-		if y_pred[y] != y_test[y]:
+		if y_pred[y] != y_te[y]:
 			counter +=1
-	error = counter / len(X_test)
+	error = counter / len(X_te)
 	return error
 	
-def freeandbounded_libsvm(X_train, y_train, X_test, y_test, c):
+def freeandbounded_libsvm(X_tr, y_tr, X_te, y_te, c):
 	bounded = 0
-	out = libsvm.fit(X_train, y_train, C=c, gamma=0.0000000001)	
-	return out[2]
+	out = libsvm.fit(X_tr, y_tr, C=c, gamma=0.0000000001)	
+	return out[2] #the number of free and bounded support vectors
 
 
 def differentC(X_train, y_train, X_test, y_test):
@@ -195,7 +191,6 @@ def differentC(X_train, y_train, X_test, y_test):
 		free, bounded = freeandbounded_libsvm(X_train, y_train, X_test, y_test, c)
 		print "C = %d: free: %d, bounded: %d " %(c, free, bounded)
 	
-
 
  ##############################################################################
 #
@@ -213,6 +208,7 @@ print "Mean of train set before normalization: \n", train_mean
 print "Variance of train set before normalization: \n", train_variance
 
 X_train_norm = meanfree(X_train)
+
 X_test_trans = transformtest(X_train, X_test) 
 transformtest_mean, transformtest_var = mean_variance(X_test_trans)
 print "Mean of transformed test set: \n", transformtest_mean
