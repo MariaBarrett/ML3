@@ -101,11 +101,10 @@ def crossval(X, y, folds):
 	print ('-'*45)
 	
 	labels_slices, features_slices = sfold(y, X,folds)
-	Accuracy = []
+	accuracy = []
 
 	#gridsearch
 	for g in tuned_parameters[0]['gamma']:
-		accuracy = []
 		for c in tuned_parameters[0]['C']:
 			temp = []
 			#crossvalidation
@@ -145,14 +144,14 @@ def crossval(X, y, folds):
 			#for every setting, get the average performance of the 5 runs:
 			temp = np.array(temp)
 			mean = np.mean(temp)
-			print "Average error of %s: %.6f" %((g,c), mean)
+			print "Average error of %s: %.6f" %((c,g), mean)
 			accuracy.append([c,g,mean])
 
 	#After all C's and gammas have been tried: get the best performance and the hyperparam pairs for that:
 	accuracy.sort(key=itemgetter(2)) #sort by error - lowest first
 	bestperf = accuracy[0][-1]
 	bestpair = tuple(accuracy[0][:2])
-	print "\nAverage error of best hyperparameter, %s: %.4f" %(bestpair, bestperf)
+	print "\nAverage error of best hyperparameter (C, gamma), %s: %.4f" %(bestpair, bestperf)
 
 
 def error_svc(X_train, y_train, X_test, y_test):
