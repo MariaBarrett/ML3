@@ -127,7 +127,7 @@ def backwardsPropogation(t, neurons, weights, deltaWeights):
 		pos += 1
 	return deltaWeights, error
 
-def updateWeights(weights, deltaWeights, learningRate=0.015):
+def updateWeights(weights, deltaWeights, learningRate=0.0015):
 	for i in range(len(weights)):
 #		print weights[i], learningRate, deltaWeights[i]
 		#weights[i][2] *= 1.2
@@ -149,7 +149,8 @@ print weights
 origNeurons= neurons
 origWeights = weights
 
-for i in np.arange(10):
+errors = []
+for i in np.arange(210):
 	totalError = 0
 	deltaWeights = np.zeros((len(weights),1))
 	for t in train:
@@ -157,10 +158,14 @@ for i in np.arange(10):
 		deltaWeights, error = backwardsPropogation(t[1], neurons, weights, deltaWeights)
 		totalError += error**2
 	totalError /= len(train)
-	plt.plot(i, totalError, "rx-")
+	errors.append([i, totalError])
 
 	#update weights
 	weights = updateWeights(weights, deltaWeights)
+
+errors=np.array(errors)
+print errors
+plt.plot(errors[:,0], errors[:,1], "r-")
 
 forwardPropogation(train[0][0], neurons, weights)
 
