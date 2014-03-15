@@ -1,5 +1,6 @@
 from __future__ import division
 import numpy as np
+import pylab as plt
 
 def loadFiles():
 	train = np.loadtxt("sincTrain25.dt")
@@ -124,9 +125,9 @@ def backwardsPropogation(t, neurons, weights, deltaWeights):
 				else:
 					deltaWeights[pos] += (error * prevLayerWeights * derivativeActivationFunction(prevLayerValue) * input[1][1])
 		pos += 1
-	return deltaWeights
+	return deltaWeights, error
 
-def updateWeights(weights, deltaWeights, learningRate=0.009):
+def updateWeights(weights, deltaWeights, learningRate=0.015):
 	for i in range(len(weights)):
 #		print weights[i], learningRate, deltaWeights[i]
 		#weights[i][2] *= 1.2
@@ -145,11 +146,19 @@ neurons, weights = initNeuronsAndWeights(input, hidden, output)
 #print neurons
 print weights
 
-for i in np.arange(1000):
+origNeurons= neurons
+origWeights = weights
+
+for i in np.arange(10):
+	totalError = 0
 	deltaWeights = np.zeros((len(weights),1))
 	for t in train:
 		forwardPropogation(t[0], neurons,weights)
-		deltaWeights = backwardsPropogation(t[1], neurons, weights, deltaWeights)
+		deltaWeights, error = backwardsPropogation(t[1], neurons, weights, deltaWeights)
+		totalError += error**2
+	totalError /= len(train)
+	plt.plot(i, totalError, "rx-")
+
 	#update weights
 	weights = updateWeights(weights, deltaWeights)
 
@@ -158,3 +167,5 @@ forwardPropogation(train[0][0], neurons, weights)
 print neurons
 print  weights
 print deltaWeights
+plt.yscale('log')
+plt.show()
