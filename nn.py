@@ -185,3 +185,17 @@ plt.ylabel(r'\textit{Mean-squared error',fontsize=16)
 plt.legend()
 plt.yscale('log')
 plt.show()
+
+### plot range -10..10 after nn is trained
+graph = []
+for i in np.arange(-10,10,0.05):
+	forwardPropogation(i, neurons, weights)
+	graph.append([i, neurons[2][0][-1]])
+
+graph = np.array(graph)
+plt.plot(graph[:,0], graph[:,1], "r-")
+plt.show()
+
+graph =[]
+for i in np.arange(-10,10,0.05):
+	graph.append([i, np.sin(i)/i])
