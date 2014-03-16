@@ -151,7 +151,7 @@ for lrn in learn:
 	neurons = np.copy(origNeurons)
 	weights = np.copy(origWeights)
 
-	for i in np.arange(2000):
+	for i in np.arange(3000):
 		totalError = 0
 		testError = 0
 		deltaWeights = np.zeros((len(weights),1))
@@ -196,12 +196,12 @@ for lrn in learn:
 errors=np.array(errors)
 print errors
 
-plt.plot(errors[0][:,0], errors[0][:,1], "r-",label="$\eta = 0.01 $")
-plt.plot(errors[1][:,0], errors[1][:,1], "m-", label="$\eta = 0.01 (test)$")
-plt.plot(errors[2][:,0], errors[2][:,1], "b-",label="$\eta = 0.001 $")
-plt.plot(errors[3][:,0], errors[3][:,1], "k-",label="$\eta = 0.001 (test)$")
-plt.plot(errors[4][:,0], errors[4][:,1], "g-", label="$\eta = 0.0001 $")
-plt.plot(errors[5][:,0], errors[5][:,1], "y-", label="$\eta = 0.0001 (test) $")
+plt.plot(errors[0][:,0], errors[0][:,1], "-",label="$\eta = 0.01 $")
+plt.plot(errors[1][:,0], errors[1][:,1], "-", label="$\eta = 0.01 (test)$")
+plt.plot(errors[2][:,0], errors[2][:,1], "-",label="$\eta = 0.001 $")
+plt.plot(errors[3][:,0], errors[3][:,1], "-",label="$\eta = 0.001 (test)$")
+plt.plot(errors[4][:,0], errors[4][:,1], "-", label="$\eta = 0.0001 $")
+plt.plot(errors[5][:,0], errors[5][:,1], "-", label="$\eta = 0.0001 (test) $")
 
 forwardPropogation(train[0][0], neurons, weights)
 #plt.rc('text', usetex=True)
