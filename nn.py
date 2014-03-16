@@ -7,29 +7,29 @@ def loadFiles():
 	test = np.loadtxt("sincValidate10.dt")
 	return train, test
 
-def initNeuronsAndWeights(input, hidden, output):
-	neurons = np.array([np.zeros((input,3)), np.zeros((hidden, 3)), np.zeros((output,3))])
-	neurons[0][:,0] = np.arange(input,dtype='float64') #add bias neuron
-	neurons[1][:,0] = np.arange(hidden,dtype='float64')+input
-	neurons[2][:,0] = np.arange(output,dtype='float64')+input+hidden
+def initNeuronsAndWeights(inpt, hidden, output):
+	neurons = np.array([np.zeros((inpt,3)), np.zeros((hidden, 3)), np.zeros((output,3))])
+	neurons[0][:,0] = np.arange(inpt,dtype='float64') #add bias neuron
+	neurons[1][:,0] = np.arange(hidden,dtype='float64')+inpt
+	neurons[2][:,0] = np.arange(output,dtype='float64')+inpt+hidden
 
-	noOfWeigths = (input*hidden)+(hidden*output)
+	noOfWeigths = (inpt*hidden)+(hidden*output)
 	weights = np.zeros((noOfWeigths, 4),dtype='float64')
 
 	np.random.seed(1337)
 	counter = 0
-	for i in range(input):
+	for i in range(inpt):
 		for j in range(hidden):
 			weights[counter+j][0] = i #from neuron i
-			weights[counter+j][1] = input+j #to neuron j
+			weights[counter+j][1] = inpt+j #to neuron j
 			weights[counter+j][2] = np.random.uniform(0,0.2) #random weight
 			weights[counter+j][3] = np.random.uniform(0,0.2) #random bias
 		counter += hidden
 
 	for i in range(hidden):
 		for j in range(output):
-			weights[counter+j][0] = i+input
-			weights[counter+j][1] = input+hidden+j
+			weights[counter+j][0] = i+inpt
+			weights[counter+j][1] = inpt+hidden+j
 			weights[counter+j][2] = np.random.uniform(0,0.2)
 			weights[counter+j][3] = np.random.uniform(0,0.2)
 		counter += output
@@ -51,23 +51,23 @@ def derivativeActivationFunction(a):
 	return 1 / (1 + np.abs(a))**2
 
 def forwardPropogation(x, neurons, weights):
-	input = neurons[0]
+	inpt = neurons[0]
 	hidden = neurons[1]
 	output = neurons[2]
 
 	newWeights = np.copy(weights)
 
-	input[0][1] = x
-	input[0][2] = x #both input and ouput are the same
+	inpt[0][1] = x
+	inpt[0][2] = x #both inpt and ouput are the same
 
-	input[1][1] = 1
-	input[1][2] = 1 #bias
+	inpt[1][1] = 1
+	inpt[1][2] = 1 #bias
 
 	for h in hidden:
 		a = 0
-		#for each input neuron, get its weight
+		#for each inpt neuron, get its weight
 		count = 0
-		for i in input:
+		for i in inpt:
 			weight = newWeights[newWeights[:,1] == h[0]] #get links going into hidden layer
 			a += (weight[count][2] *  i[2])
 			count+=1
@@ -88,7 +88,7 @@ def forwardPropogation(x, neurons, weights):
 def backwardsPropogation(t, neurons, weights, deltaWeights):
 	output = neurons[2]
 	hidden = neurons[1]
-	input = neurons[0]
+	inpt = neurons[0]
 
 	y = output[0][2]
 	error = t - y
@@ -120,10 +120,10 @@ def backwardsPropogation(t, neurons, weights, deltaWeights):
 				# get value of hidden neuron
 				prevLayerValue = hidden[hidden[:,0]==w[1]][0][1]
 
-				if pos < len(input):
-					deltaWeights[pos] += (error * prevLayerWeights * derivativeActivationFunction(prevLayerValue) * input[0][1])  #add weight to the derivation
+				if pos < len(inpt):
+					deltaWeights[pos] += (error * prevLayerWeights * derivativeActivationFunction(prevLayerValue) * inpt[0][1])  #add weight to the derivation
 				else:
-					deltaWeights[pos] += (error * prevLayerWeights * derivativeActivationFunction(prevLayerValue) * input[1][1])
+					deltaWeights[pos] += (error * prevLayerWeights * derivativeActivationFunction(prevLayerValue) * inpt[1][1])
 		pos += 1
 	return deltaWeights, error
 
@@ -140,20 +140,20 @@ MAIN
 """
 train, test = loadFiles()
 
-input, hidden, output = 2, 20, 1
-neurons, weights = initNeuronsAndWeights(input, hidden, output)
+inpt, hidden, output = 2, 20, 1
+neurons, weights = initNeuronsAndWeights(inpt, hidden, output)
 
-origNeurons = neurons
-origWeights = weights
+origNeurons = np.copy(neurons)
+origWeights = np.copy(weights)
 
 errors = []
 learn = [0.01,0.001,0.0001]
 for lrn in learn:
 	temperrors = []
-	neurons = origNeurons
-	weights = origWeights
+	neurons = np.copy(origNeurons)
+	weights = np.copy(origWeights)
 
-	for i in np.arange(50):
+	for i in np.arange(1000):
 		totalError = 0
 		deltaWeights = np.zeros((len(weights),1))
 	
@@ -178,8 +178,10 @@ plt.plot(errors[1][:,0], errors[1][:,1], "b-",label="$\eta = 0.001 $")
 plt.plot(errors[2][:,0], errors[2][:,1], "g-", label="$\eta = 0.0001 $")
 
 forwardPropogation(train[0][0], neurons, weights)
-
-
+plt.rc('text', usetex=True)
+plt.rc('font', family='Computer Modern')
+plt.xlabel(r'\textit{Iterations} ($\epsilon$)',fontsize=16)
+plt.ylabel(r'\textit{Mean-squared error',fontsize=16)
 plt.legend()
 plt.yscale('log')
 plt.show()
