@@ -153,7 +153,7 @@ for lrn in learn:
 	neurons = np.copy(origNeurons)
 	weights = np.copy(origWeights)
 
-	for i in np.arange(3000):
+	for i in np.arange(5000):
 		totalError = 0
 		deltaWeights = np.zeros((len(weights),1))
 	
@@ -176,13 +176,8 @@ for lrn in learn:
 
 		graph = np.array(graph)
 		plt.plot(graph[:,0], graph[:,1], "r-")
-
+		plt.ylim([-1,1])
 		plt.show()
-
-		graph =[]
-		for i in np.arange(-10,10,0.05):
-			graph.append([i, np.sin(i)/i])
-
 
 	errors.append(temperrors)
 
@@ -195,7 +190,7 @@ plt.plot(errors[2][:,0], errors[2][:,1], "g-", label="$\eta = 0.0001 $")
 
 forwardPropogation(train[0][0], neurons, weights)
 plt.rc('text', usetex=True)
-plt.rc('font', family='Computer Modern',fontsize=16)
+plt.rc('font', family='Computer Modern',size=16)
 plt.xlabel(r'\textit{Iterations} ($\epsilon$)')
 plt.ylabel(r'\textit{Mean-squared error')
 plt.legend()
