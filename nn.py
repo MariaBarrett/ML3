@@ -153,7 +153,7 @@ for lrn in learn:
 	neurons = np.copy(origNeurons)
 	weights = np.copy(origWeights)
 
-	for i in np.arange(1000):
+	for i in np.arange(3000):
 		totalError = 0
 		deltaWeights = np.zeros((len(weights),1))
 	
@@ -168,6 +168,22 @@ for lrn in learn:
 		#update weights
 		weights = updateWeights(weights, deltaWeights,learningRate=lrn)
 
+	if lrn == 0.01:
+		graph = []
+		for i in np.arange(-10,10,0.05):
+			forwardPropogation(i, neurons, weights)
+			graph.append([i, neurons[2][0][-1]])
+
+		graph = np.array(graph)
+		plt.plot(graph[:,0], graph[:,1], "r-")
+
+		plt.show()
+
+		graph =[]
+		for i in np.arange(-10,10,0.05):
+			graph.append([i, np.sin(i)/i])
+
+
 	errors.append(temperrors)
 
 errors=np.array(errors)
@@ -179,23 +195,11 @@ plt.plot(errors[2][:,0], errors[2][:,1], "g-", label="$\eta = 0.0001 $")
 
 forwardPropogation(train[0][0], neurons, weights)
 plt.rc('text', usetex=True)
-plt.rc('font', family='Computer Modern')
-plt.xlabel(r'\textit{Iterations} ($\epsilon$)',fontsize=16)
-plt.ylabel(r'\textit{Mean-squared error',fontsize=16)
+plt.rc('font', family='Computer Modern',fontsize=16)
+plt.xlabel(r'\textit{Iterations} ($\epsilon$)')
+plt.ylabel(r'\textit{Mean-squared error')
 plt.legend()
 plt.yscale('log')
 plt.show()
 
 ### plot range -10..10 after nn is trained
-graph = []
-for i in np.arange(-10,10,0.05):
-	forwardPropogation(i, neurons, weights)
-	graph.append([i, neurons[2][0][-1]])
-
-graph = np.array(graph)
-plt.plot(graph[:,0], graph[:,1], "r-")
-plt.show()
-
-graph =[]
-for i in np.arange(-10,10,0.05):
-	graph.append([i, np.sin(i)/i])
