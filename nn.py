@@ -22,16 +22,16 @@ def initNeuronsAndWeights(input, hidden, output):
 		for j in range(hidden):
 			weights[counter+j][0] = i #from neuron i
 			weights[counter+j][1] = input+j #to neuron j
-			weights[counter+j][2] = np.random.uniform(0,1) #random weight
-			weights[counter+j][3] = np.random.uniform(0,1) #random bias
+			weights[counter+j][2] = np.random.uniform(0,0.2) #random weight
+			weights[counter+j][3] = np.random.uniform(0,0.2) #random bias
 		counter += hidden
 
 	for i in range(hidden):
 		for j in range(output):
 			weights[counter+j][0] = i+input
 			weights[counter+j][1] = input+hidden+j
-			weights[counter+j][2] = np.random.uniform(0,1)
-			weights[counter+j][3] = np.random.uniform(0,1)
+			weights[counter+j][2] = np.random.uniform(0,0.2)
+			weights[counter+j][3] = np.random.uniform(0,0.2)
 		counter += output
 
 	#weights[0][2] += 0.000001
@@ -143,34 +143,43 @@ train, test = loadFiles()
 input, hidden, output = 2, 20, 1
 neurons, weights = initNeuronsAndWeights(input, hidden, output)
 
-#print neurons
-print weights
-
-origNeurons= neurons
+origNeurons = neurons
 origWeights = weights
 
 errors = []
-for i in np.arange(210):
-	totalError = 0
-	deltaWeights = np.zeros((len(weights),1))
-	for t in train:
-		forwardPropogation(t[0], neurons,weights)
-		deltaWeights, error = backwardsPropogation(t[1], neurons, weights, deltaWeights)
-		totalError += error**2
-	totalError /= len(train)
-	errors.append([i, totalError])
+learn = [0.01,0.001,0.0001]
+for lrn in learn:
+	temperrors = []
+	neurons = origNeurons
+	weights = origWeights
 
-	#update weights
-	weights = updateWeights(weights, deltaWeights)
+	for i in np.arange(50):
+		totalError = 0
+		deltaWeights = np.zeros((len(weights),1))
+	
+		for t in train:
+			forwardPropogation(t[0], neurons,weights)
+			deltaWeights, error = backwardsPropogation(t[1], neurons, weights, deltaWeights)
+			totalError += error**2
+	
+		totalError /= len(train)
+		temperrors.append([i, totalError])
+
+		#update weights
+		weights = updateWeights(weights, deltaWeights,learningRate=lrn)
+
+	errors.append(temperrors)
 
 errors=np.array(errors)
 print errors
-plt.plot(errors[:,0], errors[:,1], "r-")
+
+plt.plot(errors[0][:,0], errors[0][:,1], "r-",label="$\eta = 0.01 $")
+plt.plot(errors[1][:,0], errors[1][:,1], "b-",label="$\eta = 0.001 $")
+plt.plot(errors[2][:,0], errors[2][:,1], "g-", label="$\eta = 0.0001 $")
 
 forwardPropogation(train[0][0], neurons, weights)
 
-print neurons
-print  weights
-print deltaWeights
+
+plt.legend()
 plt.yscale('log')
 plt.show()
