@@ -138,7 +138,7 @@ MAIN
 """
 train, test = loadFiles()
 
-inpt, hidden, output = 2, 20, 1
+inpt, hidden, output = 2, 2, 1 #Change here to see the output with 2 hidden neurons
 neurons, weights = initNeuronsAndWeights(inpt, hidden, output)
 
 origNeurons = np.copy(neurons)
