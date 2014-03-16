@@ -129,8 +129,6 @@ def backwardsPropogation(t, neurons, weights, deltaWeights):
 
 def updateWeights(weights, deltaWeights, learningRate=0.0015):
 	for i in range(len(weights)):
-#		print weights[i], learningRate, deltaWeights[i]
-		#weights[i][2] *= 1.2
 		weights[i][2] += learningRate * deltaWeights[i]
 
 	return weights
@@ -149,21 +147,29 @@ origWeights = np.copy(weights)
 errors = []
 learn = [0.01,0.001,0.0001]
 for lrn in learn:
-	temperrors = []
+	temperrors, temptesterrors = [], []
 	neurons = np.copy(origNeurons)
 	weights = np.copy(origWeights)
 
-	for i in np.arange(5000):
+	for i in np.arange(2000):
 		totalError = 0
+		testError = 0
 		deltaWeights = np.zeros((len(weights),1))
 	
 		for t in train:
 			forwardPropogation(t[0], neurons,weights)
 			deltaWeights, error = backwardsPropogation(t[1], neurons, weights, deltaWeights)
 			totalError += error**2
+
+		#do the same for the test
+		for te in test:
+			forwardPropogation(te[0], neurons, weights)
+			testError += (neurons[2][0][-1] - te[1])**2
 	
 		totalError /= len(train)
+		testError /= len(test)
 		temperrors.append([i, totalError])
+		temptesterrors.append([i, testError])
 
 		#update weights
 		weights = updateWeights(weights, deltaWeights,learningRate=lrn)
@@ -176,23 +182,32 @@ for lrn in learn:
 
 		graph = np.array(graph)
 		plt.plot(graph[:,0], graph[:,1], "r-")
-		plt.ylim([-1,1])
+
 		plt.show()
 
+		graph =[]
+		for i in np.arange(-10,10,0.05):
+			graph.append([i, np.sin(i)/i])
+
+
 	errors.append(temperrors)
+	errors.append(temptesterrors)
 
 errors=np.array(errors)
 print errors
 
 plt.plot(errors[0][:,0], errors[0][:,1], "r-",label="$\eta = 0.01 $")
-plt.plot(errors[1][:,0], errors[1][:,1], "b-",label="$\eta = 0.001 $")
-plt.plot(errors[2][:,0], errors[2][:,1], "g-", label="$\eta = 0.0001 $")
+plt.plot(errors[1][:,0], errors[1][:,1], "m-", label="$\eta = 0.01 (test)$")
+plt.plot(errors[2][:,0], errors[2][:,1], "b-",label="$\eta = 0.001 $")
+plt.plot(errors[3][:,0], errors[3][:,1], "k-",label="$\eta = 0.001 (test)$")
+plt.plot(errors[4][:,0], errors[4][:,1], "g-", label="$\eta = 0.0001 $")
+plt.plot(errors[5][:,0], errors[5][:,1], "y-", label="$\eta = 0.0001 (test) $")
 
 forwardPropogation(train[0][0], neurons, weights)
-plt.rc('text', usetex=True)
-plt.rc('font', family='Computer Modern',size=16)
-plt.xlabel(r'\textit{Iterations} ($\epsilon$)')
-plt.ylabel(r'\textit{Mean-squared error')
+#plt.rc('text', usetex=True)
+#plt.rc('font', family='Computer Modern',fontsize=16)
+#plt.xlabel(r'\textit{Iterations} ($\epsilon$)')
+#plt.ylabel(r'\textit{Mean-squared error')
 plt.legend()
 plt.yscale('log')
 plt.show()
