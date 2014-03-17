@@ -151,7 +151,7 @@ for lrn in learn:
 	neurons = np.copy(origNeurons)
 	weights = np.copy(origWeights)
 
-	for i in np.arange(50000):
+	for i in np.arange(5000):
 		totalError = 0
 		testError = 0
 		deltaWeights = np.zeros((len(weights),1))
