@@ -86,12 +86,11 @@ def sfold(features, labels, s):
 ##############################################################################
 
 """
-The function expects a train set with labels and number of folds. 
-The function has all C's and gammas. For each combination it
-runs 5 fold crossvalidation: 
-For every test-set for as many folds as there are: use the remaining as train sets exept if it's the test set. 
-Then we sum up the result for every run and average it. The average performance per combination is stored.
-The best /lowest average and the combination that produced it is returned.   
+The function expects a train set, a 1D list of train labels and number of folds. 
+The function has dicts of all C's and gammas. For each combination it runs 5 fold crossvalidation: 
+For every test-set for as many folds as there are: use the remaining as train sets (exept if it's the test set.) 
+Then we sum up the test and train result for every run and average it. The average performances per combination is stored.
+The lowest test average and the combination that produced it is returned with the train error rate.   
 """
 def crossval(X_train, y_train, folds):
 	# Set the parameters by cross-validation
@@ -110,13 +109,12 @@ def crossval(X_train, y_train, folds):
 			for f in xrange(folds):
 				crossvaltrain = []
 				crossvaltrain_labels = []
-				
-				#define test-set for this run
-				crossvaltest = features_slices[f]
-				crossvaltest =  np.array(crossvaltest)
-				crossvaltest_labels = labels_slices[f]
-				crossvaltest_labels = np.array(crossvaltest_labels)
 
+				#define test-set for this run
+				crossvaltest = np.array(features_slices[f])
+				crossvaltest_labels = np.array(labels_slices[f])
+				
+				#define train set for this run
 				for i in xrange(folds): #putting content of remaining slices in the train set 
 					if i != f: # - if it is not the test slice: 
 						for elem in features_slices[i]:
@@ -124,6 +122,7 @@ def crossval(X_train, y_train, folds):
 							
 						for lab in labels_slices[i]:
 							crossvaltrain_labels.append(lab) #...and a list of adjacent labels
+				
 				crossvaltrain = np.array(crossvaltrain)
 				crossvaltrain_labels = np.array(crossvaltrain_labels)
 
@@ -131,7 +130,6 @@ def crossval(X_train, y_train, folds):
 				out = libsvm.fit(crossvaltrain, crossvaltrain_labels, svm_type=0, C=c, gamma=g)
 				train_y_pred = libsvm.predict(crossvaltrain, *out)
 				y_pred = libsvm.predict(crossvaltest, *out)
-				
 
 				#getting the train error count
 				tr_count = 0
@@ -146,7 +144,7 @@ def crossval(X_train, y_train, folds):
 					if y_pred[y] != crossvaltest_labels[y]:
 						counter +=1
 				#and storing the error result. 
-				temp.append(counter / len(crossvaltrain))
+				temp.append(counter / len(crossvaltest))
 
 			#for every setting, get the average performance of the 5 runs:
 			trainmean = np.array(np.mean(tr_temp))
@@ -185,8 +183,9 @@ def error_svc(X_train, y_train, X_test, y_test):
 	
 """
 This function tries fitting using different C's and looks at the output. 
-If the coefficient = c, then the support vector is bounded.
-The rest of the support vectors are free.
+It expects train set, train labels, test set, test labels.
+If the coefficient = c, then the support vector is bounded and it is counted. 
+The rest of the support vectors are free. (total - bounded)
 It prints the number of free and bound support vectors. 
 """
 def differentC(X_train, y_train, X_test, y_test):
