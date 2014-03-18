@@ -22,7 +22,9 @@ def read_data(filename):
 		features.append(l[:-1])
 		labels.append(l[-1])
 	feat = np.array(features)
+	random.shuffle(feat, lambda: 0.76)
 	lab = np.array(labels)
+	random.shuffle(lab, lambda: 0.76)
 	return lab, feat
 
 ##############################################################################
@@ -73,8 +75,8 @@ def sfold(features, labels, s):
 	featurefold = np.copy(features)
 	labelfold = np.copy(labels)
 
-	random.shuffle(featurefold, lambda: 0.5) 
-	random.shuffle(labelfold, lambda: 0.5) #using the same shuffle 
+	#random.shuffle(featurefold, lambda: 0.5) 
+	#random.shuffle(labelfold, lambda: 0.5) #using the same shuffle 
 	feature_slices = [featurefold[i::s] for i in xrange(s)]
 	label_slices = [labelfold[i::s] for i in xrange(s)]
 	return label_slices, feature_slices
@@ -157,21 +159,20 @@ def crossval(X_train, y_train, folds):
 	bestperf = accuracy[0][-2]
 	besttrain = accuracy[0][-1]
 	bestpair = tuple(accuracy[0][:2])
-	print "\nAverage error of best hyperparameter (C, gamma), %s: Test = %.6f train = %.6f" %(bestpair, bestperf, besttrain)
+	print "\nBest hyperparameter (C, gamma)", bestpair
 	return bestpair
 
 def error_svc(X_train, y_train, X_test, y_test):
 	out = libsvm.fit(X_train, y_train, svm_type=0, C=best_hyperparam_norm[0], gamma=best_hyperparam_norm[1])
-	train_y_pred = libsvm.predict(X_test, *out)
+	train_y_pred = libsvm.predict(X_train, *out)
 	y_pred = libsvm.predict(X_test, *out)
 
 	#train error
 	c = 0
-	for y in xrange(len(train_y_pred)):
-		if train_y_pred[y] != y_train[y]:
+	for v in xrange(len(train_y_pred)):
+		if y_train[v] != train_y_pred[v]:
 			c +=1
-	train_error = c / len(X_train)
-
+	train_error = c / len(train_y_pred)
 
 	#test error
 	counter = 0
@@ -189,7 +190,7 @@ The rest of the support vectors are free. (total - bounded)
 It prints the number of free and bound support vectors. 
 """
 def differentC(X_train, y_train, X_test, y_test):
-	C = [0.01, 0.1, 1,10,100,1000,10000,100000]
+	C = [0.01, 0.1, 1,10,100,1000]
 	
 	for c in C:
 		bounded = 0
@@ -201,7 +202,7 @@ def differentC(X_train, y_train, X_test, y_test):
 			if co == c:
 				bounded += 1
 		free = supportvectors - bounded
-		print "C = %.2f: free: %d, bounded: %d " %(c, free, bounded)
+		print "C = %s: free: %d, bounded: %d, total: %d " %(c, free, bounded, supportvectors)
 	
 
  ##############################################################################
@@ -209,6 +210,12 @@ def differentC(X_train, y_train, X_test, y_test):
 #                   	  Calling
 #
 ##############################################################################
+
+print "#" * 60 
+print ""
+print "\t\t\t\t\t\t SVM"
+print ""
+print "#" * 60
 
 y_train, X_train = read_data(trainfile)
 y_test, X_test = read_data(testfile)
@@ -252,9 +259,9 @@ train_err, test_err = error_svc(X_train, y_train, X_test, y_test)
 print "Raw: train = %.6f test = %.6f " % (train_err, test_err)
 
 train_err_norm, test_err_norm = error_svc(X_train_norm, y_train, X_test_trans, y_test)
-print "Normalized / transformed: train = %.6f, test =%.6f" %(train_err_norm, test_err_norm)
+print "Normalized / transformed: train = %.6f, test = %.6f" %(train_err_norm, test_err_norm)
 		
-gamma_difc = 0.0001
+gamma_difc = 0.001
 print '*'*45
 print "Number of free and bounded support vectors with different C, gamma =",gamma_difc
 print '*'*45	
