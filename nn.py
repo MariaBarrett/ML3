@@ -138,20 +138,20 @@ MAIN
 """
 train, test = loadFiles()
 
-inpt, hidden, output = 2, 2, 1 #Change here to see the output with 2 hidden neurons
+inpt, hidden, output = 2, 20, 1 #Change here to see the output with 2 hidden neurons
 neurons, weights = initNeuronsAndWeights(inpt, hidden, output)
 
 origNeurons = np.copy(neurons)
 origWeights = np.copy(weights)
 
 errors = []
-learn = [0.01]#,0.001,0.0001]
+learn = [0.01,0.001,0.0001]
 for lrn in learn:
 	temperrors, temptesterrors = [], []
 	neurons = np.copy(origNeurons)
 	weights = np.copy(origWeights)
 
-	for i in np.arange(5000):
+	for i in np.arange(10000): #Change this for fewer epsilons
 		totalError = 0
 		testError = 0
 		deltaWeights = np.zeros((len(weights),1))
@@ -194,20 +194,19 @@ for lrn in learn:
 	errors.append(temptesterrors)
 
 errors=np.array(errors)
-print errors
 
 plt.plot(errors[0][:,0], errors[0][:,1], "-",label="$\eta = 0.01 $")
 plt.plot(errors[1][:,0], errors[1][:,1], "-", label="$\eta = 0.01 (test)$")
-#plt.plot(errors[2][:,0], errors[2][:,1], "-",label="$\eta = 0.001 $")
-#plt.plot(errors[3][:,0], errors[3][:,1], "-",label="$\eta = 0.001 (test)$")
-#plt.plot(errors[4][:,0], errors[4][:,1], "-", label="$\eta = 0.0001 $")
-#plt.plot(errors[5][:,0], errors[5][:,1], "-", label="$\eta = 0.0001 (test) $")
+plt.plot(errors[2][:,0], errors[2][:,1], "-",label="$\eta = 0.001 $")
+plt.plot(errors[3][:,0], errors[3][:,1], "-",label="$\eta = 0.001 (test)$")
+plt.plot(errors[4][:,0], errors[4][:,1], "-", label="$\eta = 0.0001 $")
+plt.plot(errors[5][:,0], errors[5][:,1], "-", label="$\eta = 0.0001 (test) $")
 
 forwardPropogation(train[0][0], neurons, weights)
-#plt.rc('text', usetex=True)
-#plt.rc('font', family='Computer Modern',fontsize=16)
-#plt.xlabel(r'\textit{Iterations} ($\epsilon$)')
-#plt.ylabel(r'\textit{Mean-squared error')
+plt.rc('text', usetex=True)
+plt.rc('font', family='Computer Modern',size=16)
+plt.xlabel(r'\textit{Iterations} ($\epsilon$)')
+plt.ylabel(r'\textit{Mean-squared error')
 plt.legend()
 plt.yscale('log')
 plt.show()
