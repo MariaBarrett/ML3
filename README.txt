@@ -24,4 +24,11 @@ It also set to run with 20 hidden
 neurons, but this can be changed in
 nn.py . 
 
+Be mindful that the current setting
+of epoch is 1000 so it runs faster.
+
+To test the other epocch values you
+can change the epoch value in main.py
+line 31. 
+
 *************************************
