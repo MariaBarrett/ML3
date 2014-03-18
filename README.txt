@@ -1,25 +1,13 @@
-<<<<<<< HEAD
-
-The following libraries are needed:
-
-libsvm
-numpy
-random
-operator
-collections
-pylab
-
-Run main.py from terminal.
-Code for neural network runs first. Then SVM. 
-=======
 *************************************
 Required modules:
 -----------------
 
-Numpy
+numpy
 Scikit-Learn (sklearn)
-Pylab
-
+pylab
+random
+operator
+collections
 -------------------------------------
 
 Running the program:
@@ -37,4 +25,3 @@ neurons, but this can be changed in
 nn.py . 
 
 *************************************
->>>>>>> FETCH_HEAD
